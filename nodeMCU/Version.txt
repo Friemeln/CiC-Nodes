@@ -1,0 +1,37 @@
+--[[
+
+V0.1 :
++ Init
+
+V0.1b:
++ 1.Befehle:
+    red/green           für LED rot/grün
++ Hilfetext auf Konsole
+
+V0.1c:
++ weitere Befehle:
+    clear               LED aus
+    alert               lässt 10x die rote LED blinken
+    heap                gibt den aktuellen HEAP im "/log" aus
+
+V0.1d:
++ Birthmeldung auf CiC/log "<shiID>: ist jetzt online <appVers>"
+
+V0.1e:
++ setID=<neueID>: verändert die gesendete ID !!BUGGY!!
+
+V0.1f:
++ WS2812 Befehle: wsred, wsgreen, wsblue, wsclear
+
+V0.1g:
++ tm1638.lua            Bibliothek für die TM1638 LED&KEY Platine
+neue Befehle:
++ tmLEDon:<0..7>        macht die entsprechende LED an
++ tmLEDoff:<0..7>       macht die entsprechende LED aus
++ tmPrint:<Zahl>        gibt die max. 8-stellige Zahl auf dem TM1638 aus
+                        verfügbare Zeichen: <space>, H, 0..9, A..F, ' -> °, - -> '
++ tmTest                testet 7-Segment & alle LEDs
++ wswrite:<GRB>*16      befüllt des WS2812 Buffer mit max. 16 <GRB>-Tripel
+
+
+--]]
