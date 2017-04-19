@@ -59,7 +59,7 @@ function module.start()
 
     print("init WS2812-16 LED")
     ws2812.init(ws2812.MODE_SINGLE)
-    -- 16 LEDs für die 4x4 Matrix 
+    -- 16 LEDs für die 4x4 Matrix
     buffer = ws2812.newBuffer(16, 3)
     buffer:fill(0, 0, 0)
     ws2812.write(buffer)
@@ -69,8 +69,13 @@ function module.start()
     tm1638.test_modul()
 
     print("Configuring Wifi ...")
-    wifi.setmode(wifi.STATION);
-    wifi.sta.getap(wifi_start)
+    if not standalone then
+        wifi.setmode(wifi.STATION);
+        wifi.sta.getap(wifi_start)
+    else
+        -- direkt weiter zu:
+        app.start()
+    end
 end
 
 return module
