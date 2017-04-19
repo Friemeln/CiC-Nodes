@@ -12,7 +12,8 @@ local heapakt = 0
 
 local shipID  = "leer"
 
--- Sends a simple ping to the broker
+-- Send a simple ping to the broker -> CiC/ping <shipID>
+-- toggle onboard LED
 local function send_ping()
     gpio.write(pinLED, gpio.LOW)
     m:publish(config.ENDPOINT .. "ping", shipID,0,0)
@@ -28,16 +29,19 @@ local function register_myself()
 end
 
 local function mqtt_start()
-    -- Anmeldung beim Broker mu� eine eindeutige ID sein! (?)
+    -- Anmeldung beim Broker muß eine eindeutige ID sein! (?)
     -- daher hier nicht shipID sondern config.ID (das wiederum die CHIP.ID des nodeMCU ist).
     -- m = mqtt.Client(config.ID, 120)
+    -- okay, geht doch direkt :-)
     m = mqtt.Client(shipID, 120)
+
     -- register message callback beforehand
     m:on("message", function(conn, topic, data)
         if data ~= nil then
             -- print(topic .. ": " .. data)
             -- do something, we have received a message
 
+            -- splitet data am  1.Doppelpunkt in Befehl & Op
             i, j   = data:find(":")
             if i == nil then
                 befehl = data
@@ -90,7 +94,8 @@ local function mqtt_start()
                 -- wswrite:<RGB>..<RGB>
                 local tmp
                 local v = {}
-                for i=1,op:len(),3 do
+                -- max. 16 Triple da der Puffer nicht größer ist.
+                for i=1,math.min(op:len(),16),3 do
                     tmp = op:sub(i,i+2)
                     -- print("i["..i.."]:"..tmp)
                     for j=1,3 do
@@ -104,12 +109,13 @@ local function mqtt_start()
                             v[j] = 2 * (v[j] - 32)
                         end
                     end
-                    -- befülle buffer mit dem GRB-Muster <op>
+                    -- befülle buffer mit dem GRB-Muster
+                    -- 1. LED hat Index 1
                     buffer:set(math.floor(i/3)+1, v[1], v[2], v[3] )
                 end
                 ws2812.write(buffer)
 
-                -- local var'S löschen ?!?
+                -- local var'S löschen ?!? ISt das nötig?
                 tmp,v = nil, nil
 
 
@@ -127,6 +133,7 @@ local function mqtt_start()
                 heapalt=heapakt
 
             elseif befehl == "setID" then
+                -- DIRTY!!!! Wenn zu oft die ID ge#ndert wird der HEAP zu klein
                 tmr.stop(6)
                 shipID=op
                 mqtt_start()
@@ -143,6 +150,7 @@ local function mqtt_start()
 
             else
                 print(topic .. ": " .. data)
+                m:publish(config.ENDPOINT .. "log",shipID.." FEHLER! "..topic .. ": " .. data,0,0)
             end
         end
     end)

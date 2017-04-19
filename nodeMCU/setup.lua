@@ -59,6 +59,7 @@ function module.start()
 
     print("init WS2812-16 LED")
     ws2812.init(ws2812.MODE_SINGLE)
+    -- 16 LEDs für die 4x4 Matrix 
     buffer = ws2812.newBuffer(16, 3)
     buffer:fill(0, 0, 0)
     ws2812.write(buffer)
