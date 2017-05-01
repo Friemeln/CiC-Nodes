@@ -1,9 +1,9 @@
--- file : application.lua
+-- file : app_v2.lua
 
-local module = {}
+local module  = {}
 
 -- Changelog: Version.txt
-local appVers = "V0.1g"
+local appVers = "V0.2a"
 
 local m       = {}
 
@@ -11,6 +11,11 @@ local heapalt = 0
 local heapakt = 0
 
 local shipID  = "leer"
+-- aktueller Status des Nodes,
+-- wird beim Einschalten durch Nachfrage beim LSP-Programms aktualisiert
+-- siehe auch: Status.txt
+local status  = 0
+
 
 -- Send a simple ping to the broker -> CiC/ping <shipID>
 -- toggle onboard LED
@@ -24,8 +29,10 @@ end
 local function register_myself()
     m:subscribe(config.ENDPOINT..shipID,0,function(conn)
         print("Successfully subscribed to data endpoint: "..config.ENDPOINT..shipID)
-        m:publish(config.ENDPOINT .. "log",shipID..": ist jetzt online "..appVers,0,0)
-    end)
+        -- mqtt:publish(topic,              payload,                              qos, retain [, function(client)])
+        m:publish(config.ENDPOINT .. "log", shipID..": ist jetzt online "..appVers, 0, 0)
+        m:publish(config.ENDPOINT .. "lso", "online:"..shipID, 0, 0)
+end)
 end
 
 local function mqtt_start()
@@ -62,6 +69,41 @@ local function mqtt_start()
                 print("setID:xx : shipID = xx")
 
                 print("help  : dieser Text")
+
+            elseif befehl == "start" then
+                -- Startfreigabe für Pilot
+                status = 2
+
+            elseif befehl == "checker" then
+                -- in op steht welcher checker
+                status = 3
+
+            elseif befehl == "status" then
+                -- Rückmeldung des richtigen Status durch LSP-Programms
+                status = op
+                -- nun noch die richtigen Aktionen ausführen:
+
+            elseif befehl == "alive?" then
+                -- auf dem Kanal: lso !!!!
+                -- LSP-Programm fragt die Nodes an
+                m:publish(config.ENDPOINT .. "lso", "online:"..shipID, 0, 0)
+
+            elseif befehl == "docked" then
+                -- Meldung an Raptor-Node:
+                status = 0 -- ??? Richtig??
+                -- nun noch die richtigen Aktionen ausführen:
+
+            elseif befehl == "undocked" then
+                -- Meldung an Raptor-Node:
+                status = 1 -- ??? Richtig??
+                -- nun noch die richtigen Aktionen ausführen:
+
+            elseif befehl == "isdocked?" then
+                -- auf dem Kanal: lso !!!!
+                -- LSP-Programm fragt die Nodes an
+
+            elseif befehl == "red" then
+                -- print("LED => Rot")
 
             elseif befehl == "red" then
                 -- print("LED => Rot")

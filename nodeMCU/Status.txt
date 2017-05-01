@@ -1,0 +1,95 @@
+# Stand vom: 1.5.2017
+
+Node Status
+- Hangar (aus)
+z.B.: Node ohne Strom
+per last will and testament:
+<- CiC/lso offline:<id>
+per button
+<- CiC/lso landed:<id>
+
+- Röhre (nach einschalten) -- STATUS 0
+Node hat Strom, liefert bereits die PINGs
+<- CiC/lso online:<id>
+
+- Startbereit Röhre (umschalten) -- STATUS 1
+Pilot hat den "READY" Knopf betätigt
+<- CiC/lso ready:<id>
+
+- Weltraum (start durch lso) -- STATUS 2
+LSO hat den Flug freigegeben, der Pilot startet in Diaspora
+-> CiC/<id> start
+
+- Landeanflug (checker durch lso) -- STATUS 3
+Pilot hat den Checker (Blue/Rot) zugewiesen, LED zeigt das an
+-> CiC/<id> checker:<color>
+
+Node Raptor Status
+- Angedockt / Docking durch LSO kontrolliert
+
+
+
+LSP -> Node
+- CiC/<id> start                    Impliziert: Status:2
+- CiC/<id> checker:<color>          Impliziert: Status:3
+- CiC/<id> status:<status>
+Status: ist normalerweise nach Start des Nodes auf 0
+sollte der Status anders sein postet LSO den richtigen Status
+
+- CiC/lso alive?
+Antwort wäre dann: siehe Zeile - CiC/lso online:<id>
+
+LSP -> Node Raptor
+- CiC/<id> docked
+- CiC/<id> undocked
+- CiC/lso isdocked?<id>
+solange keine Antwort: nicht angedockt
+
+
+Node -> LSP
+- CiC/lso online:<id>
+LSP antwortet darauf mit dem Status des Nodes, also entweder:
+CiC/<id> status:0   CiC/<id> status:1   CiC/<id> start    oder CiC/<id> checker:<color>
+- CiC/lso offline:<id>
+- CiC/lso landed:<id>
+- CiC/lso ready:<id>
+- CiC/log unknown command <id>:<msg>
+
+
+Außerhalb vom Protokoll:
+====================
+Cheftaste:
+    CiC/Chef anwesend / abwesend / Status
+
+Missionsspezifisch:
+    Trigger!
+
+
+Node-Hardware: (minimum Ausstattung)
+===============================
+4x4 WS2812
+2 Button
+rot/grün LED
+
+mögliche HW:
+    TM1638 7-Segment + 7 LEDs rot
+
+
+
+CiC/Viper610_Trigger/speed 13
+CiC/ping Viper610_Trigger
+CiC/Viper610_Trigger/pos 0:353:0
+CiC/Viper610_Trigger/speed 11
+
+CiC/log DIASPORA: Viper610 Trigger ist jetzt offline
+
+/lwt Viper610 Trigger - MIA
+
+CiC/ping 2863455
+CiC/ping 2863455
+CiC/ping 2863455
+CiC/ping 2863455
+CiC/ping 2863455
+CiC/ping 2863455
+
+CiC/log LOVE Client: geht jetzt offline
