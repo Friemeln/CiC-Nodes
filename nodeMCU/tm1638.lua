@@ -87,39 +87,35 @@ function module.setLED(address, value)
 end
 
 function module.getKey()
-  local button = 0
-  local v      = 0
-
-  sendCommand(0x42)
-  -- Data-Port auf Input stellen
-  gpio.mode(pinDio, gpio.INPUT)
-  gpio.write(pinDio, gpio.HIGH)
-
-
-
-  -- hole 4 Bytes
-  for j=0,3 do
+    local button = 0x00
+    local v,i,j  = 0, 0, 0
+    --[[
+    Bit   : 0000.0000.1111.1111.2222.2222.3333.3333
+    Button: 1    5    2    6    3    7    4    8
+    Ergebnis: 12345678
+    --]]
     gpio.write(pinStb, gpio.LOW)
-    for i=0,7 do
-        gpio.write(pinClk, gpio.LOW)
-
-        tmr.delay(1000)
-
-        v = gpio.read(pinDio)
-        button = bit.bor(bit.lshift(button,1),v)
-
-        print(j,i,v,button)
-
-        gpio.write(pinClk, gpio.HIGH)
-    end
+    send(0x42)
+    -- Data-Port auf Input stellen
+    gpio.mode(pinDio, gpio.INPUT)
+    -- print("j, i, v, button")
+    -- hole 4 Bytes
+    for j=0, 3 do
+        for i=0, 7 do
+            gpio.write(pinClk, gpio.LOW)
+            v = gpio.read(pinDio)
+            if v==1 then
+                button = bit.set(button, i+j)
+            end
+            -- print(j,i,v,button)
+            gpio.write(pinClk, gpio.HIGH)
+        end
+    end -- j
+    -- Data-Port auf OUTPUT stellen
+    gpio.mode(pinDio, gpio.OUTPUT)
     gpio.write(pinStb, gpio.HIGH)
-  end -- j
-  -- Data-Port auf OUTPUT stellen
-  gpio.mode(pinDio, gpio.OUTPUT)
-  gpio.write(pinDio, gpio.LOW)
 
-
-  return 0
+    return button
 end
 
 function module.print(iString)
@@ -196,7 +192,7 @@ function module.setup()
 end
 
 function module.start()
-	setup()
+    setup()
 end
 
 return module
