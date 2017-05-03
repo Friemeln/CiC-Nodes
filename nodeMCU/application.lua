@@ -1,22 +1,30 @@
--- file : application.lua
+-- file : app_v2.lua
 
-local module = {}
+local module  = {}
 
 -- Changelog: Version.txt
-local appVers = "V0.1g"
+local appVers = "V0.2a"
 
 local m       = {}
 
 local heapalt = 0
 local heapakt = 0
+local gKeyakt = 0
 
 local shipID  = "leer"
+-- aktueller Status des Nodes,
+-- wird beim Einschalten durch Nachfrage beim LSP-Programms aktualisiert
+-- siehe auch: Status.txt
+local status  = 0
+
 
 -- Send a simple ping to the broker -> CiC/ping <shipID>
 -- toggle onboard LED
 local function send_ping()
     gpio.write(pinLED, gpio.LOW)
+    tm1638.setLED(7,1)
     m:publish(config.ENDPOINT .. "ping", shipID,0,0)
+    tm1638.setLED(7,0)
     gpio.write(pinLED, gpio.HIGH)
 end
 
@@ -24,15 +32,14 @@ end
 local function register_myself()
     m:subscribe(config.ENDPOINT..shipID,0,function(conn)
         print("Successfully subscribed to data endpoint: "..config.ENDPOINT..shipID)
-        m:publish(config.ENDPOINT .. "log",shipID..": ist jetzt online "..appVers,0,0)
+        -- mqtt:publish(topic,              payload,                              qos, retain [, function(client)])
+        m:publish(config.ENDPOINT .. "log", shipID..": ist jetzt online "..appVers, 0, 0)
+        m:publish(config.ENDPOINT .. "lso", "online:"..shipID, 0, 0)
     end)
 end
 
 local function mqtt_start()
-    -- Anmeldung beim Broker muß eine eindeutige ID sein! (?)
-    -- daher hier nicht shipID sondern config.ID (das wiederum die CHIP.ID des nodeMCU ist).
-    -- m = mqtt.Client(config.ID, 120)
-    -- okay, geht doch direkt :-)
+    -- Anmeldung beim Broker muß eine eindeutige ID sein!
     m = mqtt.Client(shipID, 120)
 
     -- register message callback beforehand
@@ -62,6 +69,38 @@ local function mqtt_start()
                 print("setID:xx : shipID = xx")
 
                 print("help  : dieser Text")
+
+            elseif befehl == "start" then
+                -- Startfreigabe für Pilot
+                status = 2
+
+            elseif befehl == "checker" then
+                -- in op steht welcher checker
+                status = 3
+
+            elseif befehl == "status" then
+                -- Rückmeldung des richtigen Status durch LSP-Programms
+                status = op
+                -- nun noch die richtigen Aktionen ausführen:
+
+            elseif befehl == "alive?" then
+                -- auf dem Kanal: lso !!!!
+                -- LSP-Programm fragt die Nodes an
+                m:publish(config.ENDPOINT .. "lso", "online:"..shipID, 0, 0)
+
+            elseif befehl == "docked" then
+                -- Meldung an Raptor-Node:
+                status = 0 -- ??? Richtig??
+                -- nun noch die richtigen Aktionen ausführen:
+
+            elseif befehl == "undocked" then
+                -- Meldung an Raptor-Node:
+                status = 1 -- ??? Richtig??
+                -- nun noch die richtigen Aktionen ausführen:
+
+            elseif befehl == "isdocked?" then
+                -- auf dem Kanal: lso !!!!
+                -- LSP-Programm fragt die Nodes an
 
             elseif befehl == "red" then
                 -- print("LED => Rot")
@@ -148,6 +187,10 @@ local function mqtt_start()
             elseif befehl == "tmTest" then
                 tm1638.test_modul()
 
+            elseif befehl == "tmGetKey" then
+                -- op = tm1638.getKey()
+                m:publish(config.ENDPOINT .. shipID, "getKey():"..gKeyakt,0,0)
+
             else
                 print(topic .. ": " .. data)
                 m:publish(config.ENDPOINT .. "log",shipID.." FEHLER! "..topic .. ": " .. data,0,0)
@@ -166,7 +209,24 @@ local function mqtt_start()
     function(con, reason) gpio.serout(pinR,gpio.HIGH,{9000,995000},10-reason, function() print("failed - reason: "..reason) end)
 end)
 
+--[[
+if not tmr.create():alarm(200, tmr.ALARM_AUTO, function()
+    gKeyakt = tm1638.getKey()
+    for i=0,7 do
+        if bit.isset(gKeyakt,i) then
+            tm1638.setLED(i,1)
+        else
+            tm1638.setLED(i,0)
+        end
+    end
+end)
+then
+    print("getKey() Timer create failed!")
 end
+
+--]]
+
+end --mqtt.start()
 
 function module.start()
     shipID = config.ID
